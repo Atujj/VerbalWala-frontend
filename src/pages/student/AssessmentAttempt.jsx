@@ -34,7 +34,7 @@ export default function AssessmentAttempt() {
 
   //Engine
   const { currentQuestion, currentIndex, answers, updateAnswer, nextQuestion } =
-    useAssessmentEngine(assessment);
+    useAssessmentEngine(assessment.fillBlankQuestions);
 
   const { warningCount, maxWarnings, dialogOpen, closeDialog } =
     useAssessmentIntegrity({
@@ -50,17 +50,29 @@ export default function AssessmentAttempt() {
 
   const [phase, setPhase] = useState(ASSESSMENT_PHASES.FILL_BLANK);
 
-  const [passage, setPassage] = useState(null);
-
   const [passageTimeLeft, setPassageTimeLeft] = useState(0);
-
-  const [passageAnswer, setPassageAnswer] = useState("");
-
-  const [email, setEmail] = useState(null);
 
   const [emailTimeLeft, setEmailTimeLeft] = useState(0);
 
-  const [emailAnswer, setEmailAnswer] = useState("");
+  const [passages, setPassages] = useState([]);
+
+  const [currentPassageIndex, setCurrentPassageIndex] = useState(0);
+
+  const [passageAnswers, setPassageAnswers] = useState({});
+
+  const [emails, setEmails] = useState([]);
+
+  const [currentEmailIndex, setCurrentEmailIndex] = useState(0);
+
+  const [emailAnswers, setEmailAnswers] = useState({});
+
+  const [passageReadingTime, setPassageReadingTime] = useState(0);
+
+  const [passageWritingTime, setPassageWritingTime] = useState(0);
+
+  const currentPassage = passages[currentPassageIndex];
+
+  const currentEmail = emails[currentEmailIndex];
 
   //helper function
   const submitCurrentSection = async () => {
@@ -76,7 +88,13 @@ export default function AssessmentAttempt() {
         requestAnswers,
       );
 
-      setPassage(response);
+      setPassages(response.passageQuestions);
+
+      setCurrentPassageIndex(0);
+
+      setPassageReadingTime(response.readingTime);
+
+      setPassageWritingTime(response.writingTime);
 
       setPassageTimeLeft(response.readingTime);
 
@@ -87,10 +105,22 @@ export default function AssessmentAttempt() {
   };
 
   const submitPassageSection = async () => {
-    try {
-      const response = await submitPassage(assessment.attemptId, passageAnswer);
+    const requestAnswers = passages.map((question) => ({
+      questionId: question.id,
 
-      setEmail(response);
+      answer: passageAnswers[question.id] ?? "",
+    }));
+
+    try {
+      const response = await submitPassage(
+        assessment.attemptId,
+
+        requestAnswers,
+      );
+
+      setEmails(response.emailQuestions);
+
+      setCurrentEmailIndex(0);
 
       setEmailTimeLeft(response.writingTime);
 
@@ -101,8 +131,18 @@ export default function AssessmentAttempt() {
   };
 
   const submitEmailSection = async () => {
+    const requestAnswers = emails.map((question) => ({
+      questionId: question.id,
+
+      answer: emailAnswers[question.id] ?? "",
+    }));
+
     try {
-      await submitEmail(assessment.attemptId, emailAnswer);
+      await submitEmail(
+        assessment.attemptId,
+
+        requestAnswers,
+      );
 
       navigate(ROUTES.STUDENT_SUBMITTED);
     } catch (error) {
@@ -141,7 +181,7 @@ export default function AssessmentAttempt() {
     }
 
     if (passageTimeLeft === 0) {
-      setPassageTimeLeft(passage.writingTime);
+      setPassageTimeLeft(passageWritingTime);
 
       setPhase(ASSESSMENT_PHASES.PASSAGE_WRITE);
 
@@ -161,6 +201,18 @@ export default function AssessmentAttempt() {
     }
 
     if (passageTimeLeft === 0) {
+      // More passages remaining
+      if (currentPassageIndex < passages.length - 1) {
+        setCurrentPassageIndex((prev) => prev + 1);
+
+        setPassageTimeLeft(passageReadingTime);
+
+        setPhase(ASSESSMENT_PHASES.PASSAGE_READ);
+
+        return;
+      }
+
+      // Last passage finished
       submitPassageSection();
 
       return;
@@ -171,7 +223,13 @@ export default function AssessmentAttempt() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [phase, passageTimeLeft]);
+  }, [
+    phase,
+    passageTimeLeft,
+    currentPassageIndex,
+    passages,
+    passageReadingTime,
+  ]);
 
   useEffect(() => {
     if (phase !== ASSESSMENT_PHASES.EMAIL) {
@@ -179,6 +237,14 @@ export default function AssessmentAttempt() {
     }
 
     if (emailTimeLeft === 0) {
+      if (currentEmailIndex < emails.length - 1) {
+        setCurrentEmailIndex((prev) => prev + 1);
+
+        setEmailTimeLeft(assessment.emailWritingTime);
+
+        return;
+      }
+
       submitEmailSection();
 
       return;
@@ -189,7 +255,7 @@ export default function AssessmentAttempt() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [phase, emailTimeLeft]);
+  }, [phase, emailTimeLeft, currentEmailIndex, emails]);
 
   //Visibility Change
 
@@ -210,7 +276,10 @@ export default function AssessmentAttempt() {
   //Passage Read
   if (phase === ASSESSMENT_PHASES.PASSAGE_READ) {
     content = (
-      <PassageReadSection passage={passage} passageTimeLeft={passageTimeLeft} />
+      <PassageReadSection
+        passage={currentPassage}
+        passageTimeLeft={passageTimeLeft}
+      />
     );
   }
 
@@ -219,8 +288,13 @@ export default function AssessmentAttempt() {
     content = (
       <PassageWriteSection
         passageTimeLeft={passageTimeLeft}
-        passageAnswer={passageAnswer}
-        setPassageAnswer={setPassageAnswer}
+        passageAnswer={passageAnswers[currentPassage?.id] ?? ""}
+        setPassageAnswer={(value) =>
+          setPassageAnswers((prev) => ({
+            ...prev,
+            [currentPassage.id]: value,
+          }))
+        }
       />
     );
   }
@@ -229,15 +303,18 @@ export default function AssessmentAttempt() {
   if (phase === ASSESSMENT_PHASES.EMAIL) {
     content = (
       <EmailSection
-        email={email}
+        email={currentEmail}
         emailTimeLeft={emailTimeLeft}
-        emailAnswer={emailAnswer}
-        setEmailAnswer={setEmailAnswer}
+        emailAnswer={emailAnswers[currentEmail?.id] ?? ""}
+        setEmailAnswer={(value) =>
+          setEmailAnswers((prev) => ({
+            ...prev,
+            [currentEmail.id]: value,
+          }))
+        }
       />
     );
   }
-
-  
 
   return (
     <>

@@ -8,7 +8,14 @@ import { toast } from "sonner";
 
 import { useAssessment } from "@/hooks/useAssessment";
 
+import { useAssessmentDetails } from "@/hooks/useAssessmentDetails";
+
 export default function AssessmentInstructions() {
+
+  const {
+    assessment,
+    loading,
+} = useAssessmentDetails();
 
     const { startAssessment: saveAssessment } = useAssessment();
     
@@ -20,7 +27,7 @@ export default function AssessmentInstructions() {
     try {
         const response = await startAssessment(assessmentId);
 
-        console.log(response);
+        
 
         saveAssessment(response);
 
@@ -41,35 +48,39 @@ export default function AssessmentInstructions() {
     }
 };
 
+if (loading || !assessment) {
+    return <p>Loading...</p>;
+}
+
   return (
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardContent className="p-8">
           <h1 className="text-3xl font-bold">
-            Communication Skills Assessment
+            {assessment.title}
           </h1>
 
           <p className="mt-3 text-slate-500">
-            Read the instructions carefully before starting.
+            {assessment.description}
           </p>
 
           <div className="grid grid-cols-3 gap-6 mt-8">
             <div>
               <p className="text-slate-500">Duration</p>
 
-              <h2 className="text-xl font-semibold">30 Minutes</h2>
+              <h2 className="text-xl font-semibold">{assessment.duration} Minutes</h2>
             </div>
 
             <div>
               <p className="text-slate-500">Questions</p>
 
-              <h2 className="text-xl font-semibold">22</h2>
+              <h2 className="text-xl font-semibold">{assessment.totalQuestions}</h2>
             </div>
 
             <div>
               <p className="text-slate-500">Attempts</p>
 
-              <h2 className="text-xl font-semibold">3</h2>
+              <h2 className="text-xl font-semibold">{assessment.attemptsUsed} / {assessment.maxAttempts}</h2>
             </div>
           </div>
 

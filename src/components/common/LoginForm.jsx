@@ -46,6 +46,8 @@ export default function LoginForm() {
 
             toast.success("Login successful");
 
+            
+
             if (response.user.role === ROLES.ADMIN) {
                 navigate(ROUTES.ADMIN_DASHBOARD);
             } else {

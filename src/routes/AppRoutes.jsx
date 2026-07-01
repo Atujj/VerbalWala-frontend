@@ -8,7 +8,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 
 import StudentLayout from "@/layouts/StudentLayout";
-import Dashboard from "@/pages/student/Dashboard";
 
 import AssessmentInstructions from "@/pages/student/AssessmentInstructions";
 
@@ -22,19 +21,29 @@ import AssessmentSubmitted from "@/pages/student/AssessmentSubmitted";
 
 import StudentResult from "@/pages/student/StudentResult";
 
-import Assessments from "@/pages/student/Assessments";
-
-import Profile from "@/pages/student/Profile";
-
 import SignupPage from "@/pages/auth/SignupPage";
+
+import AdminLayout from "@/layouts/AdminLayout";
+
+import StudentDashboard from "@/pages/student/Dashboard";
+import StudentAssessments from "@/pages/student/Assessments";
+import StudentProfile from "@/pages/student/Profile";
+
+import AdminDashboard from "@/pages/admin/Dashboard";
+import AdminAssessments from "@/pages/admin/Assessments";
+import AdminProfile from "@/pages/admin/Profile";
+
+import CreateAssessment from "@/pages/admin/CreateAssessment";
+
+import ManageAssessment from "@/pages/admin/ManageAssessment";
 
 // function StudentDashboard() {
 //     return <h1>Student Dashboard</h1>;
 // }
 
-function AdminDashboard() {
-  return <h1>Admin Dashboard</h1>;
-}
+// function AdminDashboard() {
+//   return <h1>Admin Dashboard</h1>;
+// }
 
 export default function AppRoutes() {
   return (
@@ -47,20 +56,20 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
               <StudentLayout>
-                <Dashboard />
+                <StudentDashboard />
               </StudentLayout>
             </ProtectedRoute>
           }
         />
 
-        <Route
+        {/* <Route
           path={ROUTES.ADMIN_DASHBOARD}
           element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AdminDashboard />
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         <Route
           path={ROUTES.STUDENT_INSTRUCTIONS}
@@ -121,7 +130,7 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
               <StudentLayout>
-                <Assessments />
+                <StudentAssessments />
               </StudentLayout>
             </ProtectedRoute>
           }
@@ -132,18 +141,52 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
               <StudentLayout>
-                <Profile />
+                <StudentProfile />
               </StudentLayout>
             </ProtectedRoute>
           }
         />
 
+        <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
+
         <Route
-    path={ROUTES.SIGNUP}
-    element={<SignupPage />}
-/>
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+
+          <Route
+            path={ROUTES.ADMIN_ASSESSMENTS}
+            element={<AdminAssessments />}
+          />
+
+          <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
+        </Route>
 
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
+
+        <Route
+          path={ROUTES.ADMIN_CREATE_ASSESSMENT}
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CreateAssessment />} />
+        </Route>
+
+        <Route
+          path={ROUTES.ADMIN_ASSESSMENT_DETAILS}
+          element={<ManageAssessment />}
+        />
+        <Route
+          path={ROUTES.ADMIN_CREATE_ASSESSMENT}
+          element={<CreateAssessment />}
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,9 +1,9 @@
 import axiosInstance from "@/api/axios";
 
-export async function getProfile() {
+export async function getDashboard() {
 
     const response = await axiosInstance.get(
-        "/profile"
+        "/admin/dashboard"
     );
 
     return response.data.data;

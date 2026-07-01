@@ -30,12 +30,12 @@ export async function submitFillBlanks(attemptId, answers) {
     return response.data.data;
 }
 
-export async function submitPassage(attemptId, answer) {
+export async function submitPassage(attemptId, answers) {
 
     const response = await axiosInstance.post(
         `/student/assessments/attempts/${attemptId}/submit-passage`,
         {
-            answer,
+            answers,
         }
     );
 
@@ -43,12 +43,12 @@ export async function submitPassage(attemptId, answer) {
 
 }
 
-export async function submitEmail(attemptId, answer) {
+export async function submitEmail(attemptId, answers) {
 
     const response = await axiosInstance.post(
         `/student/assessments/attempts/${attemptId}/submit-email`,
         {
-            answer,
+            answers,
         }
     );
 
@@ -67,6 +67,17 @@ export async function terminateAssessment(
             reason,
         }
     );
+
+}
+
+export async function createAssessment(data) {
+
+    const response = await axiosInstance.post(
+        "/admin/assessments",
+        data
+    );
+
+    return response.data.data;
 
 }
 

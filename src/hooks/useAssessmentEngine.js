@@ -1,38 +1,55 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-export function useAssessmentEngine(assessment) {
+export function useAssessmentEngine(questions = []) {
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const [answers, setAnswers] = useState({});
 
-    const currentQuestion =
-        assessment.fillBlankQuestions[currentIndex];
+    const currentQuestion = useMemo(() => {
 
-    const updateAnswer = (value) => {
+        if (!questions || questions.length === 0) {
+            return null;
+        }
+
+        return questions[currentIndex] ?? null;
+
+    }, [questions, currentIndex]);
+
+    function updateAnswer(value) {
+
+        if (!currentQuestion) {
+            return;
+        }
 
         setAnswers(prev => ({
             ...prev,
             [currentQuestion.id]: value,
         }));
 
-    };
+    }
 
-    const nextQuestion = () => {
+    function nextQuestion() {
 
-        if (
-            currentIndex <
-            assessment.fillBlankQuestions.length - 1
-        ) {
+        if (currentIndex < questions.length - 1) {
 
             setCurrentIndex(prev => prev + 1);
 
             return true;
+
         }
 
         return false;
 
-    };
+    }
+
+    function resetEngine() {
+
+        setCurrentIndex(0);
+
+        setAnswers({});
+
+    }
 
     return {
 
@@ -45,6 +62,10 @@ export function useAssessmentEngine(assessment) {
         updateAnswer,
 
         nextQuestion,
+
+        resetEngine,
+
+        totalQuestions: questions.length,
 
     };
 
