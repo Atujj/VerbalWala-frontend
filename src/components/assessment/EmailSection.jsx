@@ -1,10 +1,25 @@
 import AssessmentTimer from "./AssessmentTimer";
 
+import { Button } from "@/components/ui/button";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 export default function EmailSection({
     email,
     emailTimeLeft,
     emailAnswer,
     setEmailAnswer,
+    onSubmit,
 }) {
 
     return (
@@ -32,6 +47,53 @@ export default function EmailSection({
                     setEmailAnswer(e.target.value)
                 }
             />
+
+            <div className="flex justify-end">
+
+            <AlertDialog>
+
+                <AlertDialogTrigger asChild>
+
+                    <Button size="lg">
+                        Submit Assessment
+                    </Button>
+
+                </AlertDialogTrigger>
+
+                <AlertDialogContent>
+
+                    <AlertDialogHeader>
+
+                        <AlertDialogTitle>
+                            Submit Assessment?
+                        </AlertDialogTitle>
+
+                        <AlertDialogDescription>
+                            Once submitted, you will not be able to modify your answers.
+                            If you are sure, click Submit.
+                        </AlertDialogDescription>
+
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+
+                        <AlertDialogCancel>
+                            Cancel
+                        </AlertDialogCancel>
+
+                        <AlertDialogAction
+                            onClick={onSubmit}
+                        >
+                            Submit
+                        </AlertDialogAction>
+
+                    </AlertDialogFooter>
+
+                </AlertDialogContent>
+
+            </AlertDialog>
+
+        </div>
 
         </div>
 

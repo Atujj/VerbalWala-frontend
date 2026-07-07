@@ -88,13 +88,17 @@ if (loading || !assessment) {
             <h2 className="text-xl font-semibold">Instructions</h2>
 
             <ul className="mt-4 space-y-3 list-disc list-inside text-slate-600">
-              <li>Complete all sections.</li>
+              <li>Complete all sections of the assessment.</li>
+
+              <li>Once you move to the next section, you cannot return to the previous section.</li>
+
+              <li>You cannot skip ahead to future sections.</li>
+
+              <li>Each section will be submitted automatically when the timer expires.</li>
+
+              <li>Once you click Start Assessment, the timer begins immediately and cannot be paused or restarted.</li>
 
               <li>Do not refresh the browser.</li>
-
-              <li>Passage and Email are AI evaluated.</li>
-
-              <li>Timer cannot be paused.</li>
 
               <li>Switching tabs may end your assessment.</li>
             </ul>

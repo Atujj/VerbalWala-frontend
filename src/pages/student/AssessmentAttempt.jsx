@@ -16,6 +16,8 @@ import { useAssessmentIntegrity } from "@/hooks/useAssessmentIntegrity";
 
 import AssessmentWarningDialog from "@/components/assessment/AssessmentWarningDialog";
 
+import TransitionSection from "@/components/assessment/TransitionSection";
+
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 
@@ -70,6 +72,10 @@ export default function AssessmentAttempt() {
 
   const [passageWritingTime, setPassageWritingTime] = useState(0);
 
+  const [transitionTime, setTransitionTime] = useState(10);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const currentPassage = passages[currentPassageIndex];
 
   const currentEmail = emails[currentEmailIndex];
@@ -98,7 +104,9 @@ export default function AssessmentAttempt() {
 
       setPassageTimeLeft(response.readingTime);
 
-      setPhase(ASSESSMENT_PHASES.PASSAGE_READ);
+      setTransitionTime(10);
+
+      setPhase(ASSESSMENT_PHASES.PASSAGE_TRANSITION);
     } catch (error) {
       console.error(error);
     }
@@ -124,13 +132,19 @@ export default function AssessmentAttempt() {
 
       setEmailTimeLeft(response.writingTime);
 
-      setPhase(ASSESSMENT_PHASES.EMAIL);
+      setTransitionTime(10);
+
+      setPhase(ASSESSMENT_PHASES.EMAIL_TRANSITION);
     } catch (error) {
       console.error(error);
     }
   };
 
   const submitEmailSection = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
     const requestAnswers = emails.map((question) => ({
       questionId: question.id,
 
@@ -147,6 +161,7 @@ export default function AssessmentAttempt() {
       navigate(ROUTES.STUDENT_SUBMITTED);
     } catch (error) {
       console.error(error);
+      setIsSubmitting(false);
     }
   };
 
@@ -232,9 +247,9 @@ export default function AssessmentAttempt() {
   ]);
 
   useEffect(() => {
-    if (phase !== ASSESSMENT_PHASES.EMAIL) {
-      return;
-    }
+    if (phase !== ASSESSMENT_PHASES.EMAIL || isSubmitting) {
+    return;
+  }
 
     if (emailTimeLeft === 0) {
       if (currentEmailIndex < emails.length - 1) {
@@ -255,7 +270,32 @@ export default function AssessmentAttempt() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [phase, emailTimeLeft, currentEmailIndex, emails]);
+  }, [phase, emailTimeLeft, currentEmailIndex, emails, isSubmitting]);
+
+  useEffect(() => {
+    if (
+      phase !== ASSESSMENT_PHASES.PASSAGE_TRANSITION &&
+      phase !== ASSESSMENT_PHASES.EMAIL_TRANSITION
+    ) {
+      return;
+    }
+
+    if (transitionTime === 0) {
+      if (phase === ASSESSMENT_PHASES.PASSAGE_TRANSITION) {
+        setPhase(ASSESSMENT_PHASES.PASSAGE_READ);
+      } else {
+        setPhase(ASSESSMENT_PHASES.EMAIL);
+      }
+
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setTransitionTime((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [phase, transitionTime]);
 
   //Visibility Change
 
@@ -269,6 +309,22 @@ export default function AssessmentAttempt() {
         currentQuestion={currentQuestion}
         answers={answers}
         updateAnswer={updateAnswer}
+      />
+    );
+  }
+
+  if (phase === ASSESSMENT_PHASES.PASSAGE_TRANSITION) {
+    content = (
+      <TransitionSection
+        title="📖 Passage Recall"
+        subtitle="Fill in the Blank section completed successfully."
+        timeLeft={transitionTime}
+        instructions={[
+          "Read the passage carefully.",
+          "You cannot return to previous questions or skip to the next one.",
+          "Write from memory after reading.",
+          "The timer begins after this screen.",
+        ]}
       />
     );
   }
@@ -299,6 +355,22 @@ export default function AssessmentAttempt() {
     );
   }
 
+  if (phase === ASSESSMENT_PHASES.EMAIL_TRANSITION) {
+    content = (
+      <TransitionSection
+        title="✉️ Email Writing"
+        subtitle="Passage Recall section completed successfully."
+        timeLeft={transitionTime}
+        instructions={[
+          "Write a professional email.",
+          "Use proper grammar and formatting.",
+          "Be concise and relevant.",
+          "The timer begins after this screen.",
+        ]}
+      />
+    );
+  }
+
   //Email
   if (phase === ASSESSMENT_PHASES.EMAIL) {
     content = (
@@ -312,6 +384,7 @@ export default function AssessmentAttempt() {
             [currentEmail.id]: value,
           }))
         }
+        onSubmit={submitEmailSection}
       />
     );
   }
