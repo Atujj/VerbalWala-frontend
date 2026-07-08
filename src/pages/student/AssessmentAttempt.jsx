@@ -18,6 +18,8 @@ import AssessmentWarningDialog from "@/components/assessment/AssessmentWarningDi
 
 import TransitionSection from "@/components/assessment/TransitionSection";
 
+import AssessmentCompleted from "@/components/assessment/AssessmentCompleted";
+
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 
@@ -76,11 +78,26 @@ export default function AssessmentAttempt() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [passageReady, setPassageReady] = useState(false);
+
+  const [emailReady, setEmailReady] = useState(false);
+
+  const [submissionCompleted, setSubmissionCompleted] = useState(false);
+
   const currentPassage = passages[currentPassageIndex];
 
   const currentEmail = emails[currentEmailIndex];
 
   //helper function
+
+  const handleSubmitAssessment = () => {
+
+  setSubmissionCompleted(true);
+
+  submitEmailSection();
+
+};
+
   const submitCurrentSection = async () => {
     const requestAnswers = assessment.fillBlankQuestions.map((question) => ({
       questionId: question.id,
@@ -104,9 +121,7 @@ export default function AssessmentAttempt() {
 
       setPassageTimeLeft(response.readingTime);
 
-      setTransitionTime(10);
-
-      setPhase(ASSESSMENT_PHASES.PASSAGE_TRANSITION);
+      setPassageReady(true);
     } catch (error) {
       console.error(error);
     }
@@ -132,9 +147,7 @@ export default function AssessmentAttempt() {
 
       setEmailTimeLeft(response.writingTime);
 
-      setTransitionTime(10);
-
-      setPhase(ASSESSMENT_PHASES.EMAIL_TRANSITION);
+      setEmailReady(true);
     } catch (error) {
       console.error(error);
     }
@@ -147,21 +160,19 @@ export default function AssessmentAttempt() {
 
     const requestAnswers = emails.map((question) => ({
       questionId: question.id,
-
       answer: emailAnswers[question.id] ?? "",
     }));
 
     try {
-      await submitEmail(
-        assessment.attemptId,
-
-        requestAnswers,
-      );
+      await submitEmail(assessment.attemptId, requestAnswers);
 
       navigate(ROUTES.STUDENT_SUBMITTED);
     } catch (error) {
       console.error(error);
+
       setIsSubmitting(false);
+
+      setSubmissionCompleted(false);
     }
   };
 
@@ -177,6 +188,12 @@ export default function AssessmentAttempt() {
       if (moved) {
         setTimeLeft(assessment.fillBlankTime);
       } else {
+        setPassageReady(false);
+
+        setTransitionTime(15);
+
+        setPhase(ASSESSMENT_PHASES.PASSAGE_TRANSITION);
+
         submitCurrentSection();
       }
 
@@ -228,6 +245,12 @@ export default function AssessmentAttempt() {
       }
 
       // Last passage finished
+      setEmailReady(false);
+
+      setTransitionTime(15);
+
+      setPhase(ASSESSMENT_PHASES.EMAIL_TRANSITION);
+
       submitPassageSection();
 
       return;
@@ -248,8 +271,8 @@ export default function AssessmentAttempt() {
 
   useEffect(() => {
     if (phase !== ASSESSMENT_PHASES.EMAIL || isSubmitting) {
-    return;
-  }
+      return;
+    }
 
     if (emailTimeLeft === 0) {
       if (currentEmailIndex < emails.length - 1) {
@@ -259,6 +282,8 @@ export default function AssessmentAttempt() {
 
         return;
       }
+
+      setSubmissionCompleted(true);
 
       submitEmailSection();
 
@@ -281,9 +306,11 @@ export default function AssessmentAttempt() {
     }
 
     if (transitionTime === 0) {
-      if (phase === ASSESSMENT_PHASES.PASSAGE_TRANSITION) {
+      if (phase === ASSESSMENT_PHASES.PASSAGE_TRANSITION && passageReady) {
         setPhase(ASSESSMENT_PHASES.PASSAGE_READ);
-      } else {
+      }
+
+      if (phase === ASSESSMENT_PHASES.EMAIL_TRANSITION && emailReady) {
         setPhase(ASSESSMENT_PHASES.EMAIL);
       }
 
@@ -295,7 +322,7 @@ export default function AssessmentAttempt() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [phase, transitionTime]);
+  }, [phase, transitionTime, passageReady, emailReady]);
 
   //Visibility Change
 
@@ -371,9 +398,14 @@ export default function AssessmentAttempt() {
     );
   }
 
+  if (submissionCompleted) {
+  content = <AssessmentCompleted />;
+}
+
   //Email
   if (phase === ASSESSMENT_PHASES.EMAIL) {
     content = (
+      
       <EmailSection
         email={currentEmail}
         emailTimeLeft={emailTimeLeft}
@@ -384,7 +416,7 @@ export default function AssessmentAttempt() {
             [currentEmail.id]: value,
           }))
         }
-        onSubmit={submitEmailSection}
+        onSubmit={handleSubmitAssessment}
       />
     );
   }
